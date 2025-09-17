@@ -61,6 +61,7 @@ model.compile(loss=keras.losses.categorical_crossentropy,optimizer=keras.optimiz
 #MODEL TRAINING
 hist = model.fit(X_train,y_train,batch_size=batch_size,epochs=epochs,verbose=1,validation_data=(X_test, y_test))
 model.save('mnist.h5')
+model.summary()
 
 
 #EVALUATE THE MODEL
