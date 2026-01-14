@@ -1,0 +1,74 @@
+#trying to predict customers purchasing power based on demographic and product data
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder,StandardScaler,LabelEncoder
+from sklearn.compose import ColumnTransformer
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dropout,Dense
+from tensorflow.keras.callbacks import EarlyStopping
+import joblib
+from sklearn.preprocessing import LabelEncoder
+
+train = pd.read_csv("train_black_friday.csv")
+test = pd.read_csv("test_black_friday.csv")
+
+#filling missing values
+train.fillna(0,inplace=True)
+test.fillna(0,inplace=True)
+
+#selecting/grouping the needed columns and encoding them
+
+col_cat = ["Gender","Age","City_Category","Stay_In_Current_City_Years"]
+for c in col_cat:
+    le = LabelEncoder()
+    combine_col = pd.concat([train[c],test[c]],axis=0)
+    le.fit(combine_col)
+    train[c] = le.transform(train[c])
+    test[c] = le.transform(test[c])
+
+X = train.drop(["User_ID","Product_ID","Purchase"],axis=1)
+y = train["Purchase"]
+
+X_val = test.drop(["User_ID","Product_ID"],axis=1)
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=8)
+
+'''
+gb = GradientBoostingRegressor(n_estimators=100,learning_rate=0.05,max_depth=5,random_state=42)
+gb.fit(X_train,y_train)
+gb_pred = gb.predict(X_test)
+#print(gb_pred)   predicting the purchase amount
+print(np.sqrt(mean_squared_error(y_test,gb_pred))) #error = 2959.6548447371747
+
+#using random forest
+rf = RandomForestRegressor(n_estimators=150,max_depth=5,random_state=8)
+rf.fit(X_train,y_train)
+rf_preds = rf.predict(X_test)
+print(np.sqrt(mean_squared_error(y_test,rf_preds))) #error = 3255.293231335182
+'''
+
+#using a sequential deeplearning model
+#scaling
+standard_scaler = StandardScaler()
+X_train_scaled = standard_scaler.fit_transform(X_train)
+X_test_scaled = standard_scaler.fit_transform(X_test)
+X_val_scaled = standard_scaler.fit_transform(X_val)
+
+model = Sequential([
+    Dense(128,activation='relu',input_shape=(X_train_scaled.shape[1],)),
+    Dropout(0.2),
+    Dense(64,activation='relu'),
+    Dropout(0.2),
+    Dense(32,activation='relu'),
+    Dense(1,activation='linear')
+])
+
+model.compile(optimizer='adam',loss='mse',metrics=['mse'])
+model.fit(X_train_scaled,y_train,validation_data=(X_test_scaled,y_test),epochs=20,verbose=1)
+seq_preds = model.predict(X_test_scaled)
+print(np.sqrt(mean_squared_error(y_test,seq_preds))) #error = 
