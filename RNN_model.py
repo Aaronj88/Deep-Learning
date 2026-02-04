@@ -53,9 +53,10 @@ def create_lstm_model():
         LSTM(64,input_shape=(word_len,num_chars)),
         Dense(num_chars,activation="softmax")
     ])
-    model.compile(optimizer="adam",loss="categorical_crossentropy")
-    model.fit(X,y,epochs=30,batch_size=16,verbose=1)
+    lstm_model.compile(optimizer="adam",loss="categorical_crossentropy")
+    lstm_model.fit(X,y,epochs=30,batch_size=16,verbose=1)
     return lstm_model
+
 
 
 
