@@ -16,6 +16,9 @@ import ssl
 
 #downloading nltk dataset
 #nltk.download("punkt")
+nltk.download("punkt_tab")
+nltk.data.path.append("C:/Users/Aaron Jha/AppData/Roaming/nltk_data")
+
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
@@ -48,7 +51,7 @@ data = {
 }
 
 df = pd.DataFrame(data)
-print(df.head())
+#print(df.head())
 
 #cleaning the dataset
 
@@ -58,7 +61,9 @@ print(df.head())
 stopwords = set(stopwords.words("english"))
 def clean_text(text):
     text = text.lower()
+    print(text)
     text = re.sub(r"[^a-z\s]","",text)
+    print(text)
     tokens = word_tokenize(text)
     tokens = [word for word in tokens if word not in stopwords]
     return "".join(tokens)
@@ -73,7 +78,7 @@ print(df.head())
 
 #tokenization and padding
 tokenizer = Tokenizer()
-tokenizer.fit_transform(df["cleaned text"])
+tokenizer.fit_on_texts(df["cleaned text"])
 text_sequence = tokenizer.texts_to_sequences(df["cleaned text"])
 print("after sequencing")
 print(df.head())
@@ -82,3 +87,47 @@ X = pad_sequences(text_sequence,maxlen = max_length)
 y = df["labels encoded"]
 
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2,random_state=42)
+
+
+
+vocab_size = len(tokenizer.word_index)+1
+embedding_dimensions = 100
+#training word to vector
+sentences = [text.split() for text in df['cleaned text']]
+word_to_vec = Word2Vec(
+    sentences = sentences,
+    vector_size = embedding_dimensions,
+    min_count = 1,
+    window = 5
+)
+
+embedding_matrix = np.zeros((vocab_size,embedding_dimensions))
+for word,index in tokenizer.word_index.items():
+    if word in word_to_vec.wv:
+        embedding_matrix[index] = word_to_vec.wv[word]
+        
+print(embedding_matrix)
+
+#building LSTM model
+model = Sequential([
+    Embedding(
+    input_dim = vocab_size,
+    output_dim = embedding_dimensions,
+    weights = [embedding_matrix],
+    trainable = False,
+    input_length = max_length),
+    LSTM(128),
+    Dropout(0.5),
+    Dense(1,activation="sigmoid")
+])
+
+model.compile(optimiser = "adam",loss = "binary_crossentropy", metrics = ["accuracy"])
+model.summary()
+model.fit(X_train,y_train,verbose = 1, batch_size = 2,validation_data = (X_test,y_test), epochs = 10)
+model.save("text_classifier.h5")
+with open("tokenizer.pkl","wb") as f:
+    pickle.dump(tokenizer,f)
+
+print("model succesfully created!")
+
+
