@@ -121,7 +121,7 @@ model = Sequential([
     Dense(1,activation="sigmoid")
 ])
 
-model.compile(optimiser = "adam",loss = "binary_crossentropy", metrics = ["accuracy"])
+model.compile(optimizer = "adam",loss = "binary_crossentropy", metrics = ["accuracy"])
 model.summary()
 model.fit(X_train,y_train,verbose = 1, batch_size = 2,validation_data = (X_test,y_test), epochs = 10)
 model.save("text_classifier.h5")
