@@ -29,28 +29,48 @@ nltk.download('punkt')
 nltk.download("stopwords")
 
 #creating text dataset for summarising
-data = {
+'''data = {
     "text":[
-        "The action scenes were hard to follow",
-        "The show was very well animated",
-        "The characters were well written",
-        "The plot was a little overcomplicated sometimes",
-        "There was a lot of character devellopement",
-        "The plot was interesting",
-        "The last part and the ending were quite sad"
+        "The artistic style was fabulous!"
+        "It was badly animated."
+        "The action scenes were hard to follow.",
+        "The show was very well animated.",
+        "The characters were well written.",
+        "The plot was a little overcomplicated sometimes.",
+        "There was a lot of character devellopement.",
+        "The plot was interesting.",
+        "The last part and the ending were quite sad.",
+        "It was bad.",
+        "It was good!",
+        "It was boring.",
+        "I didn't like it...",
+        "I loved it!"
     ],
     "label":[
+        "positive",
+        "negative",
         "negative",
         "positive",
         "positive",
         "negative",
         "positive",
         "positive",
-        "negative"
+        "negative",
+        "negative",
+        "positive",
+        "negative",
+        "negative",
+        "positive"
     ]
-}
+}'''
 
-df = pd.DataFrame(data)
+df = pd.read_csv("sentiment.csv")
+df.dropna(inplace = True)
+
+
+
+
+#df = pd.DataFrame(data)
 #print(df.head())
 
 #cleaning the dataset
@@ -61,30 +81,31 @@ df = pd.DataFrame(data)
 stopwords = set(stopwords.words("english"))
 def clean_text(text):
     text = text.lower()
-    print(text)
+    #print(text)
     text = re.sub(r"[^a-z\s]","",text)
-    print(text)
+    #print(text)
     tokens = word_tokenize(text)
     tokens = [word for word in tokens if word not in stopwords]
     return "".join(tokens)
 
 #apply a function to every line of a column
-df["cleaned text"] = df["text"].apply(clean_text)
+df["cleaned text"] = df["sentence"].apply(clean_text)
 
 #encoding the labels
-le = LabelEncoder()
+'''le = LabelEncoder()
 df["labels encoded"] = le.fit_transform(df["label"])
-print(df.head())
+print(df.head())'''
 
 #tokenization and padding
 tokenizer = Tokenizer()
 tokenizer.fit_on_texts(df["cleaned text"])
 text_sequence = tokenizer.texts_to_sequences(df["cleaned text"])
-print("after sequencing")
-print(df.head())
+'''print("after sequencing")
+print(df.head())'''
 max_length = 25
 X = pad_sequences(text_sequence,maxlen = max_length)
-y = df["labels encoded"]
+#y = df["labels encoded"]
+y = df["sentiment"]
 
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2,random_state=42)
 
